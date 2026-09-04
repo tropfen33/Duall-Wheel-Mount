@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Specification-Title: Aeronautics: Dual Mounts
+Specification-Vendor: Lukas Winkler
+Specification-Version: 1
+Implementation-Title: Aeronautics-Dual-Mounts
+Implementation-Version: 1.0.0
+Implementation-Vendor: Lukas Winkler
+

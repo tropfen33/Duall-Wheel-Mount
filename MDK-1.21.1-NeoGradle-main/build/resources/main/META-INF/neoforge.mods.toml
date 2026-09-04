@@ -1,0 +1,31 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="All Rights Reserved"
+
+[[mods]]
+modId="aero_dualmounts"
+version="1.0.0"
+displayName="Aeronautics: Dual Mounts"
+authors="Lukas Winkler"
+description='''Adds dual mounting functionality to Aeronautics.'''
+
+[[dependencies.aero_dualmounts]]
+modId="neoforge"
+type="required"
+versionRange="[21.1,)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.aero_dualmounts]]
+modId="minecraft"
+type="required"
+versionRange="[1.21.1,1.22)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.aero_dualmounts]]
+modId="create"
+type="required"
+versionRange="[6.0.10,)"
+ordering="AFTER"
+side="BOTH"

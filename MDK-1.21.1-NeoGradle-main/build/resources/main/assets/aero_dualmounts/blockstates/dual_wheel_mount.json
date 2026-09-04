@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "aero_dualmounts:block/dual_wheel_mount"
+    },
+    "facing=south": {
+      "model": "aero_dualmounts:block/dual_wheel_mount",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "aero_dualmounts:block/dual_wheel_mount",
+      "y": 270
+    },
+    "facing=east": {
+      "model": "aero_dualmounts:block/dual_wheel_mount",
+      "y": 90
+    }
+  }
+}
